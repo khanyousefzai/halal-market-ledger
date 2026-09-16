@@ -5,7 +5,7 @@ on:
     # 13:10 UTC on weekdays = 09:10 ET during EDT, 08:10 ET during EST.
     # GitHub cron is always UTC and has no DST. Add a second line in winter if
     # you want it pinned to 09:10 ET year-round.
-    - cron: '32 17 * * *'
+    - cron: '10 13 * * *'
   workflow_dispatch:          # lets you run it by hand from the Actions tab
     inputs:
       dry_run:
