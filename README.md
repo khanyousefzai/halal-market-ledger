@@ -4,7 +4,7 @@ A daily Shariah-screened equity review. 112 securities — 50 US stocks, 50 TSX
 listings and 12 halal ETFs and funds — scored each trading day on a single
 105-point value-and-quality model, published as a static site.
 
-**Live site:** https://khanyousefzai.github.io/stock/
+**Live site:** https://khanyousefzai.github.io/halal-market-ledger/
 
 ---
 
