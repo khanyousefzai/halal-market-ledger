@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+*.nbconvert_errors
+
+# ML Analysis outputs (generated daily)
+ml_analysis/
+output.ipynb
+signals.csv
+fundamentals.csv
+validation_metrics.csv
+technical_snapshot.csv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

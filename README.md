@@ -6,6 +6,26 @@ listings and 12 halal ETFs and funds — scored each trading day on a single
 
 **Live site:** https://khanyousefzai.github.io/halal-market-ledger/
 
+## Features
+
+### 📊 **View Screen**
+Traditional daily Shariah-screened equity reports with 105-point scoring model.
+- 112 securities ranked daily
+- Sector performance analysis
+- Data quality checks
+- Historical archive
+
+### 🤖 **ML Analysis** (NEW)
+AI-powered machine learning forecasting dashboard.
+- 5-day return predictions using Ridge, Random Forest, Gradient Boosting ensemble
+- Technical indicators: RSI (daily & weekly), MACD, moving averages
+- Fundamental scoring: P/E, ROE, D/E, current ratio, growth rates
+- Model validation: directional accuracy, information coefficient
+- BUY/WATCH/NO BUY signals with confluence scoring
+- Full technical snapshot per stock
+
+**Both views update daily at 13:10 UTC.**
+
 ---
 
 ## One-time setup
@@ -38,21 +58,36 @@ the data fetch without committing anything.
 ## Layout
 
 ```
-generate_report.py       Daily entry point — fetch, score, write, archive
-  fetch_data.py            Yahoo Finance layer; normalises units, never guesses
-  scoring.py               105-point model, guardrails, colour bands, commentary
-  render_report.py         Renders one day's report page
-  report_css.py            Report stylesheet
-  universe.py              The 112 tickers + Shariah screen membership
-  investor_tweets.py       Optional: watched-account cashtag mentions (needs X_BEARER_TOKEN)
-  thirteen_f.py            Free: watched investors' latest SEC 13F holdings, no key needed
-build_site.py            Rebuilds index.html from data/history.json
-index.html               Landing page (generated; do not hand-edit)
-data/history.json        Machine-readable archive: one entry per run
-reports/YYYY-MM-DD.html  One self-contained report page per trading day
-assets/style.css         Landing-page styling (light + dark themes)
-requirements.txt         Python dependencies
-.github/workflows/daily.yml   Cron -> generate -> commit -> deploy
+TRADITIONAL REPORTS:
+  generate_report.py       Daily entry point — fetch, score, write, archive
+    fetch_data.py            Yahoo Finance layer; normalises units, never guesses
+    scoring.py               105-point model, guardrails, colour bands, commentary
+    render_report.py         Renders one day's report page
+    report_css.py            Report stylesheet
+    universe.py              The 112 tickers + Shariah screen membership
+    investor_tweets.py       Optional: watched-account cashtag mentions (needs X_BEARER_TOKEN)
+    thirteen_f.py            Free: watched investors' latest SEC 13F holdings, no key needed
+  build_site.py            Rebuilds index.html from data/history.json
+  view-screen.html         Daily reports page (generated)
+  data/history.json        Machine-readable archive: one entry per run
+  reports/YYYY-MM-DD.html  One self-contained report page per trading day
+
+ML ANALYSIS:
+  halal_stocks_ml_forecasting.ipynb   Colab notebook: ML models, technical analysis
+  run_colab.py             Execute notebook, extract outputs, generate dashboard (NEW)
+  ml-analysis.html         ML forecasting dashboard (generated daily)
+  signals.csv              BUY/WATCH/NO BUY signals per stock (generated)
+  fundamentals.csv         Financial ratios & scores (generated)
+  validation_metrics.csv   Model performance metrics (generated)
+  technical_snapshot.csv   Technical indicators snapshot (generated)
+
+CONFIGURATION:
+  index.html               Landing page with choice between View Screen & ML Analysis
+  assets/style.css         Landing-page styling (light + dark themes)
+  requirements.txt         Python dependencies (14 packages)
+  .gitignore              Ignore generated files
+  .github/workflows/daily.yml   Cron -> generate -> commit -> deploy
+  README.md               This file
 ```
 
 `index.html` is derived. The two things that actually carry data are
@@ -65,14 +100,26 @@ requirements.txt         Python dependencies
 Nothing manual. `.github/workflows/daily.yml` runs on a cron schedule and does
 the whole job inside GitHub Actions:
 
+### Traditional Reports
 1. Fetches all 112 securities from Yahoo Finance (`generate_report.py`)
 2. Scores the 100 stocks and applies the guardrails
 3. Writes `reports/YYYY-MM-DD.html`
 4. Appends the run to `data/history.json`
-5. Rebuilds `index.html`
-6. **Commits and pushes the result**, then deploys to Pages
+5. Rebuilds `view-screen.html`
 
-The schedule is `10 13 * * 1-5` — 13:10 UTC on weekdays, which is 09:10 ET while
+### ML Analysis (NEW)
+6. Executes the Colab notebook (`run_colab.py`)
+   - Downloads 3 years of daily price data
+   - Computes technical indicators (RSI, MACD, moving averages)
+   - Trains ML models (Ridge, Random Forest, Gradient Boosting ensemble)
+   - Generates forecasts & validation metrics
+   - Exports outputs: `signals.csv`, `fundamentals.csv`, etc.
+7. Generates ML analysis dashboard (`ml-analysis.html`)
+
+### Deploy
+8. **Commits and pushes** all updated files, then **deploys to Pages**
+
+The schedule is `10 13 * * *` — 13:10 UTC daily, which is 09:10 ET while
 US daylight time is in effect. GitHub cron is always UTC and does not follow DST,
 so in winter this lands at 08:10 ET; add a second cron line if you want it pinned.
 
