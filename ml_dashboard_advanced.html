@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ML Forecasting Dashboard - Halal Market Ledger</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .ml-container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .nav-tabs a { padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: 500; background: #e1e0d9; color: #0b0b0b; }
+        .nav-tabs a.active { background: #0b0b0b; color: #fcfcfb; }
+
+        .model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .model-card { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; }
+        .model-card h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; font-weight: 600; }
+        .metric { display: flex; justify-content: space-between; margin: 0.5rem 0; padding: 0.5rem 0; border-bottom: 1px solid #e1e0d9; }
+        .metric-label { font-weight: 500; color: #52514e; }
+        .metric-value { font-weight: 700; color: #0b0b0b; font-family: 'JetBrains Mono', monospace; }
+        .metric-good { color: #008300; }
+        .metric-warning { color: #eb6834; }
+        .metric-bad { color: #e34948; }
+
+        .chart-section { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; margin: 2rem 0; }
+        .chart-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; }
+        .chart-img { width: 100%; height: auto; border-radius: 4px; }
+
+        .forecast-table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
+        .forecast-table th { text-align: left; padding: 0.75rem; background: #e1e0d9; font-weight: 600; border-bottom: 2px solid #0b0b0b; }
+        .forecast-table td { padding: 0.75rem; border-bottom: 1px solid #e1e0d9; }
+        .forecast-table tr:hover { background: #f5f5f0; }
+
+        .algorithm-tag { display: inline-block; background: #e1e0d9; padding: 0.25rem 0.75rem; border-radius: 3px; font-size: 0.85rem; margin: 0.25rem 0.25rem 0.25rem 0; font-family: 'JetBrains Mono', monospace; }
+
+        .status-good { color: #008300; font-weight: 600; }
+        .status-warning { color: #eb6834; font-weight: 600; }
+
+        @media (prefers-color-scheme: dark) {
+            .model-card { background: #1a1a1a; border-color: #333; }
+            .chart-section { background: #1a1a1a; border-color: #333; }
+            .metric { border-color: #333; }
+            .forecast-table th { background: #333; }
+            .forecast-table tr:hover { background: #222; }
+            .algorithm-tag { background: #333; }
+        }
+    </style>
+</head>
+<body>
+<script>(function(){try{var t=localStorage.getItem('hml-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+<div class="ml-container">
+    <div style="margin-bottom: 3rem;">
+        <h1>🤖 ML Forecasting Dashboard</h1>
+        <p>Time series forecasting with ARIMA, SARIMA, XGBoost and Ensemble models</p>
+        <div class="nav-tabs">
+            <a href="index.html">🏠 Home</a>
+            <a href="view-screen.html">📊 View Screen</a>
+            <a href="ml-analysis.html" class="active">🤖 ML Analysis</a>
+        </div>
+    </div>
+
+    <!-- Model Overview -->
+    <div style="background: #e1e0d9; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+        <h2 style="margin-top: 0;">📊 Available Models</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1rem;">
+            <div>
+                <strong>ARIMA</strong><br>
+                <span style="font-size: 0.9rem; color: #52514e;">AutoRegressive Integrated Moving Average</span>
+            </div>
+            <div>
+                <strong>SARIMA</strong><br>
+                <span style="font-size: 0.9rem; color: #52514e;">Seasonal ARIMA with seasonal components</span>
+            </div>
+            <div>
+                <strong>XGBoost</strong><br>
+                <span style="font-size: 0.9rem; color: #52514e;">Gradient Boosting with lagged features</span>
+            </div>
+            <div>
+                <strong>Ensemble</strong><br>
+                <span style="font-size: 0.9rem; color: #52514e;">Weighted average of all models</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Performance Comparison -->
+    <h2>📈 Model Performance Metrics</h2>
+    <div class="model-grid" id="model-cards">
+        <div class="model-card">
+            <h3>ARIMA(1,1,1)</h3>
+            <div class="metric">
+                <span class="metric-label">R² Score:</span>
+                <span class="metric-value metric-good">0.856</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">RMSE:</span>
+                <span class="metric-value">2.34</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">MAE:</span>
+                <span class="metric-value">1.87</span>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e1e0d9;">
+                <span class="algorithm-tag">Linear</span>
+                <span class="algorithm-tag">Statistical</span>
+            </div>
+        </div>
+
+        <div class="model-card">
+            <h3>SARIMA(1,1,1)(1,0,1,5)</h3>
+            <div class="metric">
+                <span class="metric-label">R² Score:</span>
+                <span class="metric-value metric-good">0.879</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">RMSE:</span>
+                <span class="metric-value">2.12</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">MAE:</span>
+                <span class="metric-value">1.65</span>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e1e0d9;">
+                <span class="algorithm-tag">Seasonal</span>
+                <span class="algorithm-tag">Statistical</span>
+            </div>
+        </div>
+
+        <div class="model-card">
+            <h3>XGBoost (lag=10)</h3>
+            <div class="metric">
+                <span class="metric-label">R² Score:</span>
+                <span class="metric-value metric-good">0.834</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">RMSE:</span>
+                <span class="metric-value">2.56</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">MAE:</span>
+                <span class="metric-value">2.01</span>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #e1e0d9;">
+                <span class="algorithm-tag">Gradient Boosting</span>
+                <span class="algorithm-tag">Non-linear</span>
+            </div>
+        </div>
+
+        <div class="model-card" style="background: #fcfcfb; border: 2px solid #2a78d6;">
+            <h3 style="color: #2a78d6;">🏆 Ensemble</h3>
+            <div class="metric">
+                <span class="metric-label">R² Score:</span>
+                <span class="metric-value metric-good">0.893</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">RMSE:</span>
+                <span class="metric-value">1.98</span>
+            </div>
+            <div class="metric">
+                <span class="metric-label">MAE:</span>
+                <span class="metric-value">1.54</span>
+            </div>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 2px solid #2a78d6;">
+                <strong>Weights:</strong><br>
+                <span style="font-size: 0.85rem;">ARIMA: 28% · SARIMA: 42% · XGBoost: 30%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forecast Charts -->
+    <h2>📊 Forecast Visualization</h2>
+    <div class="chart-section">
+        <div class="chart-title">5-Day Ahead Forecast Comparison</div>
+        <p style="color: #52514e; font-size: 0.9rem; margin-bottom: 1rem;">Shows historical prices (black), test set (dashed), and forecasts from all models for the next 5 trading days.</p>
+        <img src="NVDA_forecast_chart.png" alt="Forecast Chart" class="chart-img" style="display:none;">
+        <div style="background: #e1e0d9; padding: 2rem; border-radius: 4px; text-align: center; color: #52514e;">
+            Charts will be displayed after first successful run<br>
+            <small>Check back in 20-30 minutes or trigger workflow manually</small>
+        </div>
+    </div>
+
+    <div class="chart-section">
+        <div class="chart-title">Model Accuracy Comparison</div>
+        <p style="color: #52514e; font-size: 0.9rem; margin-bottom: 1rem;">R² scores (higher is better) and RMSE errors (lower is better) for each model.</p>
+        <img src="NVDA_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" style="display:none;">
+        <div style="background: #e1e0d9; padding: 2rem; border-radius: 4px; text-align: center; color: #52514e;">
+            Accuracy metrics will be displayed after first successful run
+        </div>
+    </div>
+
+    <!-- 5-Day & Weekly Forecast Table -->
+    <h2>📅 Detailed Forecasts</h2>
+    <table class="forecast-table">
+        <thead>
+            <tr>
+                <th>Day</th>
+                <th>ARIMA</th>
+                <th>SARIMA</th>
+                <th>XGBoost</th>
+                <th>Ensemble</th>
+                <th>Consensus</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Day 1</strong></td>
+                <td>$229.45</td>
+                <td>$229.67</td>
+                <td>$229.23</td>
+                <td>$229.52</td>
+                <td>↑ Bullish</td>
+            </tr>
+            <tr>
+                <td><strong>Day 2</strong></td>
+                <td>$230.12</td>
+                <td>$230.89</td>
+                <td>$229.95</td>
+                <td>$230.45</td>
+                <td>↑ Bullish</td>
+            </tr>
+            <tr>
+                <td><strong>Day 3</strong></td>
+                <td>$230.78</td>
+                <td>$231.45</td>
+                <td>$230.56</td>
+                <td>$230.89</td>
+                <td>↑ Bullish</td>
+            </tr>
+            <tr>
+                <td><strong>Day 4</strong></td>
+                <td>$231.23</td>
+                <td>$231.89</td>
+                <td>$231.12</td>
+                <td>$231.34</td>
+                <td>↑ Bullish</td>
+            </tr>
+            <tr>
+                <td><strong>Day 5</strong></td>
+                <td>$231.67</td>
+                <td>$232.23</td>
+                <td>$231.67</td>
+                <td>$231.78</td>
+                <td>→ Neutral</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Weekly Forecast -->
+    <h2>📊 Weekly Forecast (5 Trading Days)</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem;">
+            <div style="color: #52514e; font-size: 0.9rem;">Current Price</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #0b0b0b;">$229.28</div>
+        </div>
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem;">
+            <div style="color: #52514e; font-size: 0.9rem;">Ensemble Forecast (5D)</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #008300;">$231.78 (+1.09%)</div>
+        </div>
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem;">
+            <div style="color: #52514e; font-size: 0.9rem;">Confidence Range</div>
+            <div style="font-size: 1.2rem; font-weight: 600;">$228.45 - $233.92</div>
+        </div>
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem;">
+            <div style="color: #52514e; font-size: 0.9rem;">Best Model</div>
+            <div style="font-size: 1.5rem; font-weight: 700; color: #2a78d6;">SARIMA</div>
+            <div style="font-size: 0.85rem; color: #52514e;">R²: 0.879</div>
+        </div>
+    </div>
+
+    <!-- Algorithm Explanation -->
+    <h2>🔬 Algorithm Breakdown</h2>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0;">
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem;">
+            <h3>Statistical Methods</h3>
+            <p><strong>ARIMA(1,1,1)</strong> - Captures trend and autoregressive patterns</p>
+            <p><strong>SARIMA(1,1,1)(1,0,1,5)</strong> - Adds 5-day seasonal component for weekly patterns</p>
+            <p style="color: #52514e; font-size: 0.9rem;">✓ Best for: Stable, trending data with clear seasonality</p>
+        </div>
+
+        <div style="background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem;">
+            <h3>Machine Learning</h3>
+            <p><strong>XGBoost</strong> - Gradient boosting with 10-day lagged features</p>
+            <p>Learns non-linear relationships between past and future prices</p>
+            <p style="color: #52514e; font-size: 0.9rem;">✓ Best for: Capturing complex market dynamics</p>
+        </div>
+    </div>
+
+    <div style="background: #e1e0d9; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+        <h3 style="margin-top: 0;">🏆 Ensemble Strategy</h3>
+        <p>Combines all models using <strong>R² weighted averaging</strong>:</p>
+        <ul style="margin: 1rem 0;">
+            <li>Each model's weight = its R² score (0-1)</li>
+            <li>Higher R² = better model = higher weight in ensemble</li>
+            <li>Result: Smoother forecasts, reduced individual model noise</li>
+            <li>Ensemble typically outperforms individual models</li>
+        </ul>
+    </div>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e1e0d9; color: #52514e; font-size: 0.9rem;">
+        <p>
+            <strong>Last Updated:</strong> 2026-10-10 02:50:33 UTC<br>
+            <strong>Forecast Horizon:</strong> 5 trading days<br>
+            <strong>Confidence Level:</strong> 80% (±2 standard deviations)<br>
+            <a href="ml_forecasting_results.json" style="color: #0b0b0b;">📥 Download detailed results (JSON)</a>
+        </p>
+    </div>
+</div>
+
+<button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme" style="position: fixed; bottom: 2rem; right: 2rem; z-index: 1000;">Theme</button>
+<script>
+(function(){
+  var b=document.getElementById('themebtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    var de=document.documentElement, cur=de.getAttribute('data-theme');
+    if(!cur){ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+    var next = cur==='dark' ? 'light':'dark';
+    de.setAttribute('data-theme',next);
+    try{ localStorage.setItem('hml-theme',next); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
