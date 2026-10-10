@@ -236,10 +236,10 @@ def main():
         json.dump(hist, f, indent=1)
     log("history.json now holds %d run(s)" % len(hist))
 
-    # ---- index ----
-    with open(os.path.join(ROOT, "index.html"), "w") as f:
+    # ---- reports page (keep index.html as landing page) ----
+    with open(os.path.join(ROOT, "reports.html"), "w") as f:
         f.write(build_site.build_index(hist))
-    log("index.html rebuilt")
+    log("reports.html rebuilt")
 
     if failures:
         log("NOTE: %d fetch failure(s): %s" % (len(failures), ", ".join(failures)))
