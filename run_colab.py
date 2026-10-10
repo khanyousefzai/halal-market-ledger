@@ -35,7 +35,8 @@ def create_stub_page():
         <h1>Machine Learning Analysis</h1>
         <p>AI-powered forecasting, technical indicators & fundamental scores updated daily.</p>
         <div class="nav-tabs">
-            <a href="index.html">📊 View Screen</a>
+            <a href="index.html">🏠 Home</a>
+            <a href="view-screen.html">📊 View Screen</a>
             <a href="ml-analysis.html" class="active">🤖 ML Analysis</a>
         </div>
     </div>
@@ -152,7 +153,8 @@ def generate_ml_dashboard():
         <h1>Machine Learning Analysis</h1>
         <p>AI-powered forecasting, technical indicators & fundamental scores updated daily.</p>
         <div class="nav-tabs">
-            <a href="index.html">📊 View Screen</a>
+            <a href="index.html">🏠 Home</a>
+            <a href="view-screen.html">📊 View Screen</a>
             <a href="ml-analysis.html" class="active">🤖 ML Analysis</a>
         </div>
     </div>
