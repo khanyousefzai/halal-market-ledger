@@ -60,12 +60,16 @@ class TimeSeriesForecaster:
 
     def prepare_data(self, train_ratio=0.8, test_days=30):
         """Split data into train/test"""
-        split_idx = int(len(self.close) * train_ratio)
-        self.train = self.close.iloc[:split_idx]
-        self.test = self.close.iloc[split_idx:split_idx + test_days]
+        # Reset index and set frequency for ARIMA/SARIMA
+        close_reindexed = self.close.reset_index(drop=True)
+        close_reindexed.index = pd.RangeIndex(len(close_reindexed))
+
+        split_idx = int(len(close_reindexed) * train_ratio)
+        self.train = close_reindexed.iloc[:split_idx]
+        self.test = close_reindexed.iloc[split_idx:split_idx + test_days]
 
         if len(self.test) < 5:
-            self.test = self.close.iloc[split_idx:]
+            self.test = close_reindexed.iloc[split_idx:]
 
         return len(self.train), len(self.test)
 
