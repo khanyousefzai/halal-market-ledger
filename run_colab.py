@@ -82,7 +82,7 @@ def run_notebook():
 
     try:
         subprocess.run(
-            ["papermill", str(notebook_path), str(output_dir / "output.ipynb"), "--kernel", "python3"],
+            ["papermill", str(notebook_path), str(output_dir / "output.ipynb")],
             timeout=1200,
             check=True,
             capture_output=False
