@@ -11,14 +11,25 @@
     <link rel="stylesheet" href="assets/style.css">
     <style>
         .ml-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; }
         .nav-tabs a { padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: 500; background: #e1e0d9; color: #0b0b0b; }
         .nav-tabs a.active { background: #0b0b0b; color: #fcfcfb; }
-        .status-box { background: #e1e0d9; padding: 2rem; border-radius: 6px; text-align: center; margin: 2rem 0; }
+        .buy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .card { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; }
+        .card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
+        .card .price { font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0; }
+        .card .pred { color: #2a78d6; font-weight: 600; }
+        .card .bullish { color: #008300; }
+        .card .bearish { color: #e34948; }
+        .metrics-table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
+        .metrics-table th { text-align: left; padding: 0.75rem; background: #e1e0d9; font-weight: 600; border-bottom: 2px solid #0b0b0b; }
+        .metrics-table td { padding: 0.75rem; border-bottom: 1px solid #e1e0d9; }
+        .metrics-table tr:hover { background: #f5f5f0; }
+        .buy-count { font-size: 2rem; font-weight: 700; color: #2a78d6; margin-right: 0.5rem; }
         @media (prefers-color-scheme: dark) {
-            .status-box { background: #222; }
-            .nav-tabs a { background: #333; }
-            .nav-tabs a.active { background: #fcfcfb; color: #0b0b0b; }
+            .card { background: #1a1a1a; border-color: #333; }
+            .metrics-table th { background: #333; }
+            .metrics-table tr:hover { background: #222; }
         }
     </style>
 </head>
@@ -36,25 +47,360 @@
         </div>
     </div>
 
-    <div class="status-box">
-        <h2 style="margin-top: 0;">⏳ Initializing ML Analysis</h2>
-        <p>The machine learning analysis is being generated for the first time. This typically takes 10-15 minutes.</p>
-        <p>The system will run the notebook daily at <strong>13:10 UTC</strong> and update this page automatically.</p>
-        <p><small>Check back shortly for results, or <a href="view-screen.html">view the standard reports</a>.</small></p>
+    <div style="background: #e1e0d9; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+        <h2 style="margin-top: 0;">Summary</h2>
+        <p><strong>Total BUY signals:</strong> <span class="buy-count">0</span></p>
+        <p><strong>WATCH (bullish but unvalidated):</strong> 24</p>
+        <p><strong>NO BUY:</strong> 35</p>
+        <p><small>Generated: 2026-10-10 02:24:12 UTC</small></p>
+    </div>
+
+    <h2>🎯 BUY Signals (Validated Edge + Bullish Forecast)</h2>
+    <div class="buy-list">
+
+    </div>
+
+    <h2>📋 Full Signals Table</h2>
+    <table class="metrics-table">
+        <thead>
+            <tr>
+                <th>Ticker</th>
+                <th>Last Close</th>
+                <th>5D Forecast %</th>
+                <th>RSI Daily</th>
+                <th>RSI Weekly</th>
+                <th>TA Score</th>
+                <th>Fundamentals</th>
+                <th>Signal</th>
+                <th>Confluence</th>
+            </tr>
+        </thead>
+        <tbody>
+
+            <tr>
+                <td><strong>GEV</strong></td>
+                <td>$1004.73</td>
+                <td>+3.57%</td>
+                <td>58</td>
+                <td>55</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>TMO</strong></td>
+                <td>$658.02</td>
+                <td>+2.64%</td>
+                <td>54</td>
+                <td>68</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>NVDA</strong></td>
+                <td>$229.28</td>
+                <td>+2.24%</td>
+                <td>53</td>
+                <td>59</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>ASML</strong></td>
+                <td>$1780.34</td>
+                <td>+1.84%</td>
+                <td>52</td>
+                <td>57</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>TSLA</strong></td>
+                <td>$382.7</td>
+                <td>+1.51%</td>
+                <td>60</td>
+                <td>52</td>
+                <td>4</td>
+                <td>Fair</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>ZS</strong></td>
+                <td>$233.73</td>
+                <td>+1.11%</td>
+                <td>73</td>
+                <td>68</td>
+                <td>6</td>
+                <td>Fair</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>AAPL</strong></td>
+                <td>$336.64</td>
+                <td>+0.95%</td>
+                <td>56</td>
+                <td>64</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>CSCO</strong></td>
+                <td>$118.39</td>
+                <td>+0.89%</td>
+                <td>65</td>
+                <td>62</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>AMD</strong></td>
+                <td>$608.1</td>
+                <td>+0.63%</td>
+                <td>57</td>
+                <td>67</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>WATCH (no validated edge)</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>ADI</strong></td>
+                <td>$406.19</td>
+                <td>+0.37%</td>
+                <td>60</td>
+                <td>59</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>MSFT</strong></td>
+                <td>$535.07</td>
+                <td>+0.36%</td>
+                <td>68</td>
+                <td>68</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>S</strong></td>
+                <td>$26.27</td>
+                <td>+0.34%</td>
+                <td>68</td>
+                <td>71</td>
+                <td>6</td>
+                <td>Fair</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>FTNT</strong></td>
+                <td>$194.75</td>
+                <td>+0.08%</td>
+                <td>73</td>
+                <td>78</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>DHR</strong></td>
+                <td>$219.81</td>
+                <td>+0.07%</td>
+                <td>55</td>
+                <td>58</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>PG</strong></td>
+                <td>$151.23</td>
+                <td>+0.04%</td>
+                <td>62</td>
+                <td>58</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>CTAS</strong></td>
+                <td>$202.41</td>
+                <td>-0.03%</td>
+                <td>58</td>
+                <td>58</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>QLYS</strong></td>
+                <td>$202.42</td>
+                <td>-0.04%</td>
+                <td>64</td>
+                <td>67</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>ANET</strong></td>
+                <td>$216.74</td>
+                <td>-0.11%</td>
+                <td>65</td>
+                <td>69</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>NOW</strong></td>
+                <td>$140.86</td>
+                <td>-0.26%</td>
+                <td>58</td>
+                <td>60</td>
+                <td>6</td>
+                <td>Fair</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>ISRG</strong></td>
+                <td>$423.96</td>
+                <td>-0.39%</td>
+                <td>67</td>
+                <td>53</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>LLY</strong></td>
+                <td>$1179.27</td>
+                <td>-0.54%</td>
+                <td>54</td>
+                <td>56</td>
+                <td>4</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>EMR</strong></td>
+                <td>$161.83</td>
+                <td>-0.63%</td>
+                <td>61</td>
+                <td>62</td>
+                <td>6</td>
+                <td>Fair</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>COP</strong></td>
+                <td>$134.1</td>
+                <td>-0.74%</td>
+                <td>60</td>
+                <td>61</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>CRWD</strong></td>
+                <td>$275.04</td>
+                <td>-0.77%</td>
+                <td>65</td>
+                <td>74</td>
+                <td>4</td>
+                <td>Fair</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+            <tr>
+                <td><strong>XOM</strong></td>
+                <td>$168.94</td>
+                <td>-0.84%</td>
+                <td>64</td>
+                <td>63</td>
+                <td>6</td>
+                <td>Strong</td>
+                <td>NO BUY</td>
+                <td>2/3</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e1e0d9; color: #52514e; font-size: 0.9rem;">
+        <p>
+            <strong>Disclaimer:</strong> This is an educational analysis tool combining machine learning forecasts,
+            technical indicators, and fundamental ratios. Not investment advice.
+            <a href="signals.csv" style="color: #2a78d6;">Download signals.csv</a> ·
+            <a href="fundamentals.csv" style="color: #2a78d6;">Download fundamentals.csv</a>
+        </p>
     </div>
 </div>
 <button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme" style="position: fixed; bottom: 2rem; right: 2rem;">Theme</button>
 <script>
-(function(){
+(function(){{
   var b=document.getElementById('themebtn'); if(!b) return;
-  b.addEventListener('click',function(){
+  b.addEventListener('click',function(){{
     var de=document.documentElement, cur=de.getAttribute('data-theme');
-    if(!cur){ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+    if(!cur){{ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }}
     var next = cur==='dark' ? 'light':'dark';
     de.setAttribute('data-theme',next);
-    try{ localStorage.setItem('hml-theme',next); }catch(e){}
-  });
-})();
+    try{{ localStorage.setItem('hml-theme',next); }}catch(e){{}}
+  }});
+}})();
 </script>
 </body>
 </html>
