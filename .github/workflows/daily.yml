@@ -66,6 +66,7 @@ jobs:
             echo "Nothing changed — not committing."
           else
             git commit -m "report: $(date -u +%Y-%m-%d)"
+            git pull --rebase
             git push
           fi
 
