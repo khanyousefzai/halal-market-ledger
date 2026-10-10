@@ -3,33 +3,30 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>ML Analysis - Halal Market Ledger</title>
+    <title>ML Forecasting Dashboard - Halal Market Ledger</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
     <link rel="stylesheet" href="assets/style.css">
     <style>
-        .ml-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
-        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; }
+        .ml-container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
         .nav-tabs a { padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: 500; background: #e1e0d9; color: #0b0b0b; }
         .nav-tabs a.active { background: #0b0b0b; color: #fcfcfb; }
-        .buy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
-        .card { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; }
-        .card h3 { margin: 0 0 0.5rem 0; font-size: 1.2rem; }
-        .card .price { font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0; }
-        .card .pred { color: #2a78d6; font-weight: 600; }
-        .card .bullish { color: #008300; }
-        .card .bearish { color: #e34948; }
-        .metrics-table { width: 100%; border-collapse: collapse; margin: 2rem 0; }
-        .metrics-table th { text-align: left; padding: 0.75rem; background: #e1e0d9; font-weight: 600; border-bottom: 2px solid #0b0b0b; }
-        .metrics-table td { padding: 0.75rem; border-bottom: 1px solid #e1e0d9; }
-        .metrics-table tr:hover { background: #f5f5f0; }
-        .buy-count { font-size: 2rem; font-weight: 700; color: #2a78d6; margin-right: 0.5rem; }
+        .model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .model-card { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem; }
+        .model-card h4 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+        .metric { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 0.3rem 0; }
+        .metric-good { color: #008300; font-weight: 600; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .chart-box { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem; }
+        .chart-img { width: 100%; height: auto; border-radius: 4px; }
+        .stock-section { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; margin: 1.5rem 0; }
         @media (prefers-color-scheme: dark) {
-            .card { background: #1a1a1a; border-color: #333; }
-            .metrics-table th { background: #333; }
-            .metrics-table tr:hover { background: #222; }
+            .model-card { background: #1a1a1a; border-color: #333; }
+            .chart-box { background: #1a1a1a; border-color: #333; }
+            .stock-section { background: #1a1a1a; border-color: #333; }
         }
     </style>
 </head>
@@ -37,9 +34,9 @@
 <script>(function(){try{var t=localStorage.getItem('hml-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
 
 <div class="ml-container">
-    <div style="margin-bottom: 3rem;">
-        <h1>Machine Learning Analysis</h1>
-        <p>AI-powered forecasting, technical indicators & fundamental scores updated daily.</p>
+    <div style="margin-bottom: 2rem;">
+        <h1>🤖 ML Forecasting Dashboard</h1>
+        <p>Advanced time series forecasting with ARIMA, SARIMA, XGBoost & Ensemble</p>
         <div class="nav-tabs">
             <a href="index.html">🏠 Home</a>
             <a href="view-screen.html">📊 View Screen</a>
@@ -48,359 +45,513 @@
     </div>
 
     <div style="background: #e1e0d9; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
-        <h2 style="margin-top: 0;">Summary</h2>
-        <p><strong>Total BUY signals:</strong> <span class="buy-count">0</span></p>
-        <p><strong>WATCH (bullish but unvalidated):</strong> 24</p>
-        <p><strong>NO BUY:</strong> 35</p>
-        <p><small>Generated: 2026-10-10 04:32:04 UTC</small></p>
+        <h2 style="margin-top: 0;">📊 Forecasting Models</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div><strong>ARIMA(1,1,1)</strong> - Autoregressive trend model</div>
+            <div><strong>SARIMA(1,1,1)(1,0,1,5)</strong> - Seasonal patterns (5-day)</div>
+            <div><strong>XGBoost</strong> - Gradient boosting (non-linear)</div>
+            <div><strong>🏆 Ensemble</strong> - Weighted average (best performance)</div>
+        </div>
     </div>
 
-    <h2>🎯 BUY Signals (Validated Edge + Bullish Forecast)</h2>
-    <div class="buy-list">
+    <h2>📈 Top Performing Forecasts</h2>
 
+    <div class="stock-section">
+        <h3>GOOGL - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.827</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$14.56</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$10.71</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$336.30</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-1.838</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$18.15</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$15.39</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$334.56</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="GOOGL_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="GOOGL_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
     </div>
 
-    <h2>📋 Full Signals Table</h2>
-    <table class="metrics-table">
-        <thead>
-            <tr>
-                <th>Ticker</th>
-                <th>Last Close</th>
-                <th>5D Forecast %</th>
-                <th>RSI Daily</th>
-                <th>RSI Weekly</th>
-                <th>TA Score</th>
-                <th>Fundamentals</th>
-                <th>Signal</th>
-                <th>Confluence</th>
-            </tr>
-        </thead>
-        <tbody>
+    <div class="stock-section">
+        <h3>SNDK - 5-Day Forecast</h3>
+        <div class="model-grid">
 
-            <tr>
-                <td><strong>GEV</strong></td>
-                <td>$1004.73</td>
-                <td>+3.57%</td>
-                <td>58</td>
-                <td>55</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-7.789</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$503.18</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$473.67</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1020.87</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>TMO</strong></td>
-                <td>$658.02</td>
-                <td>+2.64%</td>
-                <td>54</td>
-                <td>68</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-3.547</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$361.91</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$322.52</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1216.63</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>NVDA</strong></td>
-                <td>$229.28</td>
-                <td>+2.24%</td>
-                <td>53</td>
-                <td>59</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>ASML</strong></td>
-                <td>$1780.34</td>
-                <td>+1.84%</td>
-                <td>52</td>
-                <td>57</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+        <div class="chart-grid">
 
-            <tr>
-                <td><strong>TSLA</strong></td>
-                <td>$382.7</td>
-                <td>+1.51%</td>
-                <td>60</td>
-                <td>52</td>
-                <td>4</td>
-                <td>Fair</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="SNDK_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="SNDK_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
 
-            <tr>
-                <td><strong>ZS</strong></td>
-                <td>$233.73</td>
-                <td>+1.11%</td>
-                <td>73</td>
-                <td>68</td>
-                <td>6</td>
-                <td>Fair</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+    </div>
 
-            <tr>
-                <td><strong>AAPL</strong></td>
-                <td>$336.64</td>
-                <td>+0.96%</td>
-                <td>56</td>
-                <td>64</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+    <div class="stock-section">
+        <h3>AMD - 5-Day Forecast</h3>
+        <div class="model-grid">
 
-            <tr>
-                <td><strong>CSCO</strong></td>
-                <td>$118.39</td>
-                <td>+0.89%</td>
-                <td>65</td>
-                <td>62</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-7.199</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$50.17</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$46.99</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$434.77</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>AMD</strong></td>
-                <td>$608.1</td>
-                <td>+0.63%</td>
-                <td>57</td>
-                <td>67</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>WATCH (no validated edge)</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-4.082</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$39.50</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$35.03</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$454.64</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>ADI</strong></td>
-                <td>$406.19</td>
-                <td>+0.37%</td>
-                <td>60</td>
-                <td>59</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>MSFT</strong></td>
-                <td>$535.07</td>
-                <td>+0.36%</td>
-                <td>68</td>
-                <td>68</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+        <div class="chart-grid">
 
-            <tr>
-                <td><strong>S</strong></td>
-                <td>$26.27</td>
-                <td>+0.34%</td>
-                <td>68</td>
-                <td>71</td>
-                <td>6</td>
-                <td>Fair</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="AMD_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="AMD_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
 
-            <tr>
-                <td><strong>FTNT</strong></td>
-                <td>$194.75</td>
-                <td>+0.08%</td>
-                <td>73</td>
-                <td>78</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+    </div>
 
-            <tr>
-                <td><strong>DHR</strong></td>
-                <td>$219.81</td>
-                <td>+0.07%</td>
-                <td>55</td>
-                <td>58</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+    <div class="stock-section">
+        <h3>CRWD - 5-Day Forecast</h3>
+        <div class="model-grid">
 
-            <tr>
-                <td><strong>PG</strong></td>
-                <td>$151.23</td>
-                <td>+0.04%</td>
-                <td>62</td>
-                <td>58</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-5.548</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$32.94</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$30.33</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$178.20</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>CTAS</strong></td>
-                <td>$202.41</td>
-                <td>-0.03%</td>
-                <td>58</td>
-                <td>58</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-6.268</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$34.70</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$32.24</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$174.33</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>QLYS</strong></td>
-                <td>$202.42</td>
-                <td>-0.04%</td>
-                <td>64</td>
-                <td>67</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>ANET</strong></td>
-                <td>$216.74</td>
-                <td>-0.11%</td>
-                <td>65</td>
-                <td>69</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+        <div class="chart-grid">
 
-            <tr>
-                <td><strong>NOW</strong></td>
-                <td>$140.86</td>
-                <td>-0.26%</td>
-                <td>58</td>
-                <td>60</td>
-                <td>6</td>
-                <td>Fair</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="CRWD_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="CRWD_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
 
-            <tr>
-                <td><strong>ISRG</strong></td>
-                <td>$423.96</td>
-                <td>-0.39%</td>
-                <td>67</td>
-                <td>53</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+    </div>
 
-            <tr>
-                <td><strong>LLY</strong></td>
-                <td>$1179.27</td>
-                <td>-0.54%</td>
-                <td>54</td>
-                <td>56</td>
-                <td>4</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+    <div class="stock-section">
+        <h3>ASML - 5-Day Forecast</h3>
+        <div class="model-grid">
 
-            <tr>
-                <td><strong>EMR</strong></td>
-                <td>$161.83</td>
-                <td>-0.63%</td>
-                <td>61</td>
-                <td>62</td>
-                <td>6</td>
-                <td>Fair</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-5.896</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$163.37</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$151.61</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1581.49</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>COP</strong></td>
-                <td>$134.1</td>
-                <td>-0.70%</td>
-                <td>60</td>
-                <td>61</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-6.098</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$165.75</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$154.11</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1576.79</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>CRWD</strong></td>
-                <td>$275.04</td>
-                <td>-0.77%</td>
-                <td>65</td>
-                <td>74</td>
-                <td>4</td>
-                <td>Fair</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
 
-            <tr>
-                <td><strong>XOM</strong></td>
-                <td>$168.94</td>
-                <td>-0.88%</td>
-                <td>64</td>
-                <td>63</td>
-                <td>6</td>
-                <td>Strong</td>
-                <td>NO BUY</td>
-                <td>2/3</td>
-            </tr>
+        </div>
+        <div class="chart-grid">
 
-        </tbody>
-    </table>
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="ASML_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="ASML_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>TSLA - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-6.157</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$46.98</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$43.59</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$300.01</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-13.575</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$67.04</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$61.92</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$293.61</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>ENSEMBLE</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">nan</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$nan</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$nan</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="TSLA_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="TSLA_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
 
     <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e1e0d9; color: #52514e; font-size: 0.9rem;">
         <p>
-            <strong>Disclaimer:</strong> This is an educational analysis tool combining machine learning forecasts,
-            technical indicators, and fundamental ratios. Not investment advice.
-            <a href="signals.csv" style="color: #2a78d6;">Download signals.csv</a> ·
-            <a href="fundamentals.csv" style="color: #2a78d6;">Download fundamentals.csv</a>
+            <strong>Model Selection:</strong> SARIMA typically outperforms for stocks with seasonal patterns<br>
+            <strong>Ensemble Advantage:</strong> Combines all models using R²-weighted averaging for robustness<br>
+            <strong>Forecast Horizon:</strong> 5 trading days ahead with 80% confidence intervals<br>
+            <a href="ml_forecasting_results.json" style="color: #0b0b0b;">📥 Download detailed results (JSON)</a>
         </p>
     </div>
 </div>
+
 <button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme" style="position: fixed; bottom: 2rem; right: 2rem;">Theme</button>
 <script>
-(function(){{
+(function(){
   var b=document.getElementById('themebtn'); if(!b) return;
-  b.addEventListener('click',function(){{
+  b.addEventListener('click',function(){
     var de=document.documentElement, cur=de.getAttribute('data-theme');
-    if(!cur){{ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }}
+    if(!cur){ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
     var next = cur==='dark' ? 'light':'dark';
     de.setAttribute('data-theme',next);
-    try{{ localStorage.setItem('hml-theme',next); }}catch(e){{}}
-  }});
-}})();
+    try{ localStorage.setItem('hml-theme',next); }catch(e){}
+  });
+})();
 </script>
 </body>
 </html>
