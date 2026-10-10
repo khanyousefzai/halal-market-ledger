@@ -54,7 +54,7 @@ jobs:
 
       - name: Generate ML Analysis
         run: |
-          python3 run_colab.py
+          python3 run_advanced_ml.py
 
       - name: Commit the new report
         if: ${{ inputs.dry_run != true }}
