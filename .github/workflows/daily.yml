@@ -49,12 +49,16 @@ jobs:
             python3 generate_report.py
           fi
 
+      - name: Generate ML Analysis
+        run: |
+          python3 run_colab.py
+
       - name: Commit the new report
         if: ${{ inputs.dry_run != true }}
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports data/history.json index.html
+          git add reports data/history.json index.html ml-analysis.html signals.csv fundamentals.csv validation_metrics.csv technical_snapshot.csv 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "Nothing changed — not committing."
           else

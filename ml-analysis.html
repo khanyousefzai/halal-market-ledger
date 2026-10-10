@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ML Analysis - Halal Market Ledger</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .ml-container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .nav-tabs a { padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: 500; background: #e1e0d9; color: #0b0b0b; }
+        .nav-tabs a.active { background: #0b0b0b; color: #fcfcfb; }
+        .status-box { background: #e1e0d9; padding: 2rem; border-radius: 6px; text-align: center; margin: 2rem 0; }
+        @media (prefers-color-scheme: dark) {
+            .status-box { background: #222; }
+            .nav-tabs a { background: #333; }
+            .nav-tabs a.active { background: #fcfcfb; color: #0b0b0b; }
+        }
+    </style>
+</head>
+<body>
+<script>(function(){try{var t=localStorage.getItem('hml-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+<div class="ml-container">
+    <div style="margin-bottom: 3rem;">
+        <h1>Machine Learning Analysis</h1>
+        <p>AI-powered forecasting, technical indicators & fundamental scores updated daily.</p>
+        <div class="nav-tabs">
+            <a href="index.html">📊 View Screen</a>
+            <a href="ml-analysis.html" class="active">🤖 ML Analysis</a>
+        </div>
+    </div>
+
+    <div class="status-box">
+        <h2 style="margin-top: 0;">⏳ Initializing ML Analysis</h2>
+        <p>The machine learning analysis is being generated for the first time. This typically takes 10-15 minutes.</p>
+        <p>The system will run the notebook daily at <strong>13:10 UTC</strong> and update this page automatically.</p>
+        <p><small>Check back shortly for results, or <a href="index.html">view the standard reports</a>.</small></p>
+    </div>
+</div>
+<button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme" style="position: fixed; bottom: 2rem; right: 2rem;">Theme</button>
+<script>
+(function(){
+  var b=document.getElementById('themebtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    var de=document.documentElement, cur=de.getAttribute('data-theme');
+    if(!cur){ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+    var next = cur==='dark' ? 'light':'dark';
+    de.setAttribute('data-theme',next);
+    try{ localStorage.setItem('hml-theme',next); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
