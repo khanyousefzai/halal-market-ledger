@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
 Advanced ML Forecasting with Time Series Models
-Includes: ARIMA, SARIMA, XGBoost, Prophet, and ensemble methods
-Generates weekly forecasts with visualizations
+Includes: ARIMA, SARIMA, XGBoost and an inverse-RMSE weighted ensemble
+Generates 5-day forecasts with visualizations
 """
 
 import warnings
@@ -12,12 +12,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 from pathlib import Path
 
-# Time series models
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import xgboost as xgb
 
@@ -25,334 +23,222 @@ try:
     from statsmodels.tsa.arima.model import ARIMA
     from statsmodels.tsa.statespace.sarimax import SARIMAX
     HAS_STATSMODELS = True
-except:
+except ImportError:
     HAS_STATSMODELS = False
     print("[WARN] statsmodels not available - ARIMA/SARIMA disabled")
-
-try:
-    from prophet import Prophet
-    HAS_PROPHET = True
-except:
-    HAS_PROPHET = False
-    print("[WARN] Prophet not available - Prophet model disabled")
 
 # Chart styling
 INK, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#e1e0d9", "#c3c2b7", "#fcfcfb"
 COLORS = {"arima": "#2a78d6", "sarima": "#eb6834", "xgboost": "#1baf7a",
-          "prophet": "#e87ba4", "ensemble": "#6250d6", "actual": "#0b0b0b"}
+          "ensemble": "#6250d6", "naive": "#898781", "actual": "#0b0b0b"}
+MODELS = ("arima", "sarima", "xgboost", "ensemble")
+CHART_DPI = 150
 
 plt.rcParams.update({
     "figure.facecolor": SURFACE, "axes.facecolor": SURFACE, "savefig.facecolor": SURFACE,
     "axes.edgecolor": AXIS, "axes.labelcolor": MUTED, "text.color": INK,
-    "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8,
+    "xtick.color": MUTED, "ytick.color": MUTED,
+    "axes.grid": True, "grid.color": GRID, "grid.linewidth": 0.8, "axes.axisbelow": True,
     "axes.spines.top": False, "axes.spines.right": False,
-    "lines.linewidth": 2, "font.size": 10, "figure.figsize": (12, 6),
+    "lines.linewidth": 2, "font.size": 11, "legend.frameon": False,
 })
+
+
+def _recursive_forecast(model, history, steps, lags):
+    """Feed each prediction back in as the newest lag (multi-step, like ARIMA)."""
+    window = list(history[-lags:])
+    out = []
+    for _ in range(steps):
+        p = float(model.predict(np.array(window[-lags:]).reshape(1, -1))[0])
+        out.append(p)
+        window.append(p)
+    return np.array(out)
+
 
 class TimeSeriesForecaster:
     def __init__(self, ticker, close_prices, output_dir="ml_analysis"):
+        # newer yfinance returns a one-column DataFrame for a single ticker
+        if isinstance(close_prices, pd.DataFrame):
+            close_prices = close_prices.iloc[:, 0]
         self.ticker = ticker
         self.close = close_prices.dropna()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
-        self.results = {}
         self.forecasts = {}
 
     def prepare_data(self, train_ratio=0.8, test_days=30):
-        """Split data into train/test"""
-        # Reset index and set frequency for ARIMA/SARIMA
-        close_reindexed = self.close.reset_index(drop=True)
-        close_reindexed.index = pd.RangeIndex(len(close_reindexed))
+        """Split on a positional index for the models; real dates are kept for plotting."""
+        self.dates = pd.DatetimeIndex(self.close.index)
+        self.series = pd.Series(self.close.to_numpy(dtype=float), index=pd.RangeIndex(len(self.close)))
 
-        split_idx = int(len(close_reindexed) * train_ratio)
-        self.train = close_reindexed.iloc[:split_idx]
-        self.test = close_reindexed.iloc[split_idx:split_idx + test_days]
-
+        split_idx = int(len(self.series) * train_ratio)
+        self.train = self.series.iloc[:split_idx]
+        self.test = self.series.iloc[split_idx:split_idx + test_days]
         if len(self.test) < 5:
-            self.test = close_reindexed.iloc[split_idx:]
+            self.test = self.series.iloc[split_idx:]
 
+        self.naive = self._scores(np.full(len(self.test), self.train.iloc[-1]))
         return len(self.train), len(self.test)
 
-    def forecast_arima(self, periods=5):
-        """ARIMA(1,1,1) forecast"""
+    def _scores(self, test_pred):
+        y = self.test.to_numpy()
+        pred = np.asarray(test_pred, dtype=float)[:len(y)]
+        return {
+            'rmse': float(np.sqrt(mean_squared_error(y, pred))),
+            'mae': float(mean_absolute_error(y, pred)),
+            'r2': float(r2_score(y, pred)),
+            'test_pred': pred,
+        }
+
+    def _statsmodel(self, fit, name, periods):
         if not HAS_STATSMODELS or len(self.train) < 50:
             return None
-
         try:
-            model = ARIMA(self.train, order=(1, 1, 1))
-            fitted = model.fit()
-            forecast = fitted.forecast(steps=periods)
-
-            # Test set prediction for accuracy
-            test_pred = fitted.forecast(steps=len(self.test))
-            rmse = np.sqrt(mean_squared_error(self.test, test_pred[:len(self.test)]))
-            mae = mean_absolute_error(self.test, test_pred[:len(self.test)])
-            r2 = r2_score(self.test, test_pred[:len(self.test)])
-
-            return {
-                'forecast': forecast.values,
-                'model': 'ARIMA(1,1,1)',
-                'rmse': float(rmse),
-                'mae': float(mae),
-                'r2': float(r2)
-            }
+            test_pred = fit(self.train).forecast(steps=len(self.test))
+            # refit on the full history so the forecast starts from the latest close
+            forecast = fit(self.series).forecast(steps=periods)
+            return {'forecast': np.asarray(forecast, dtype=float), 'model': name, **self._scores(test_pred)}
         except Exception as e:
-            print(f"  ! ARIMA failed for {self.ticker}: {str(e)[:50]}")
+            print(f"  ! {name} failed for {self.ticker}: {str(e)[:50]}")
             return None
+
+    def forecast_arima(self, periods=5):
+        return self._statsmodel(lambda s: ARIMA(s, order=(1, 1, 1)).fit(), 'ARIMA(1,1,1)', periods)
 
     def forecast_sarima(self, periods=5):
-        """SARIMA(1,1,1)(1,0,1,5) forecast with seasonal component"""
-        if not HAS_STATSMODELS or len(self.train) < 50:
-            return None
+        return self._statsmodel(
+            lambda s: SARIMAX(s, order=(1, 1, 1), seasonal_order=(1, 0, 1, 5)).fit(disp=False),
+            'SARIMA(1,1,1)(1,0,1,5)', periods)
 
+    def forecast_xgboost(self, periods=5, lags=10):
+        if len(self.train) < lags + 10:
+            return None
         try:
-            model = SARIMAX(self.train, order=(1, 1, 1), seasonal_order=(1, 0, 1, 5))
-            fitted = model.fit(disp=False)
-            forecast = fitted.forecast(steps=periods)
+            def fit(values):
+                X = np.lib.stride_tricks.sliding_window_view(values[:-1], lags)
+                return xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.1,
+                                        random_state=42, verbosity=0).fit(X, values[lags:])
 
-            test_pred = fitted.forecast(steps=len(self.test))
-            rmse = np.sqrt(mean_squared_error(self.test, test_pred[:len(self.test)]))
-            mae = mean_absolute_error(self.test, test_pred[:len(self.test)])
-            r2 = r2_score(self.test, test_pred[:len(self.test)])
-
-            return {
-                'forecast': forecast.values,
-                'model': 'SARIMA(1,1,1)(1,0,1,5)',
-                'rmse': float(rmse),
-                'mae': float(mae),
-                'r2': float(r2)
-            }
-        except Exception as e:
-            print(f"  ! SARIMA failed for {self.ticker}: {str(e)[:50]}")
-            return None
-
-    def forecast_xgboost(self, periods=5, lag_features=10):
-        """XGBoost with lagged features"""
-        if len(self.train) < lag_features + 10:
-            return None
-
-        try:
-            # Create lagged features
-            def create_lag_features(data, lags=lag_features):
-                X, y = [], []
-                for i in range(lags, len(data)):
-                    X.append(data[i-lags:i].values)
-                    y.append(data.iloc[i])
-                return np.array(X), np.array(y)
-
-            X_train, y_train = create_lag_features(self.train)
-            X_test, y_test = create_lag_features(self.test)
-
-            if len(X_train) < 10 or len(X_test) < 2:
-                return None
-
-            # Ensure 2D shape for XGBoost
-            if X_train.ndim == 1:
-                X_train = X_train.reshape(-1, 1)
-            elif X_train.ndim == 3:
-                X_train = X_train.reshape(X_train.shape[0], -1)
-
-            if X_test.ndim == 1:
-                X_test = X_test.reshape(-1, 1)
-            elif X_test.ndim == 3:
-                X_test = X_test.reshape(X_test.shape[0], -1)
-
-            # Train XGBoost
-            model = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.1,
-                                     random_state=42, verbosity=0)
-            model.fit(X_train, y_train)
-
-            # Forecast
-            y_pred = model.predict(X_test)
-            rmse = np.sqrt(mean_squared_error(y_test, y_pred))
-            mae = mean_absolute_error(y_test, y_pred)
-            r2 = r2_score(y_test, y_pred)
-
-            # Multi-step ahead forecast
-            last_values = self.close.iloc[-lag_features:].values
-            forecast = []
-            for _ in range(periods):
-                X_pred = last_values[-lag_features:].reshape(1, -1)
-                next_pred = model.predict(X_pred)[0]
-                forecast.append(next_pred)
-                last_values = np.append(last_values[1:], next_pred)
-
-            return {
-                'forecast': np.array(forecast),
-                'model': f'XGBoost (lag={lag_features})',
-                'rmse': float(rmse),
-                'mae': float(mae),
-                'r2': float(r2)
-            }
+            train = self.train.to_numpy()
+            full = self.series.to_numpy()
+            test_pred = _recursive_forecast(fit(train), train, len(self.test), lags)
+            forecast = _recursive_forecast(fit(full), full, periods, lags)
+            return {'forecast': forecast, 'model': f'XGBoost (lag={lags})', **self._scores(test_pred)}
         except Exception as e:
             print(f"  ! XGBoost failed for {self.ticker}: {str(e)[:50]}")
             return None
 
-    def forecast_ensemble(self, periods=5):
-        """Ensemble of all available models"""
-        forecasts = []
-        weights = []
-
-        # Collect all model forecasts with valid R² scores
-        for model_name in ['arima', 'sarima', 'xgboost']:
-            if model_name in self.forecasts and self.forecasts[model_name] is not None:
-                r2 = self.forecasts[model_name].get('r2')
-                # Only include models with valid (non-NaN) R² scores
-                if r2 is not None and not np.isnan(r2):
-                    weight = max(0.1, r2)  # Use at least 0.1 as minimum weight
-                    forecasts.append(self.forecasts[model_name]['forecast'])
-                    weights.append(weight)
-
-        if not forecasts:
+    def forecast_ensemble(self):
+        members = {m: self.forecasts[m] for m in ('arima', 'sarima', 'xgboost') if self.forecasts.get(m)}
+        if not members:
             return None
-
-        # Weighted average
-        weights = np.array(weights) / np.sum(weights)
-        ensemble_forecast = np.average(forecasts, axis=0, weights=weights)
-
-        # Ensemble accuracy on test set
-        ensemble_preds = []
-        for pred, weight in zip(forecasts, weights):
-            if len(pred) >= len(self.test):
-                ensemble_preds.append(pred[:len(self.test)] * weight)
-
-        if ensemble_preds:
-            ensemble_test = np.mean(ensemble_preds, axis=0)
-            rmse = np.sqrt(mean_squared_error(self.test[:len(ensemble_test)], ensemble_test))
-            mae = mean_absolute_error(self.test[:len(ensemble_test)], ensemble_test)
-            r2 = r2_score(self.test[:len(ensemble_test)], ensemble_test)
-        else:
-            rmse = mae = r2 = 0.0
-
+        inv = np.array([1 / max(f['rmse'], 1e-9) for f in members.values()])
+        w = inv / inv.sum()
+        forecast = np.average([f['forecast'] for f in members.values()], axis=0, weights=w)
+        test_pred = np.average([f['test_pred'] for f in members.values()], axis=0, weights=w)
         return {
-            'forecast': ensemble_forecast,
-            'model': f'Ensemble ({len(forecasts)} models)',
-            'rmse': float(rmse),
-            'mae': float(mae),
-            'r2': float(r2),
-            'weights': {f'model_{i}': float(w) for i, w in enumerate(weights)}
+            'forecast': forecast,
+            'model': f'Ensemble ({len(members)} models, inverse-RMSE weighted)',
+            **self._scores(test_pred),
+            'weights': {m: float(x) for m, x in zip(members, w)},
         }
 
     def run_all_models(self, forecast_periods=5):
-        """Run all available models"""
         print(f"\n  Running models for {self.ticker}...")
-
         self.prepare_data(test_days=30)
-
-        # Run individual models
         self.forecasts['arima'] = self.forecast_arima(forecast_periods)
         self.forecasts['sarima'] = self.forecast_sarima(forecast_periods)
         self.forecasts['xgboost'] = self.forecast_xgboost(forecast_periods)
-
-        # Ensemble
-        self.forecasts['ensemble'] = self.forecast_ensemble(forecast_periods)
-
+        self.forecasts['ensemble'] = self.forecast_ensemble()
         return self.forecasts
 
-    def generate_forecast_chart(self):
-        """Create visualization of all forecasts"""
-        if not self.forecasts:
+    def _style_dates(self, ax):
+        loc = mdates.AutoDateLocator(minticks=4, maxticks=8)
+        ax.xaxis.set_major_locator(loc)
+        ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(loc))
+
+    def generate_forecast_chart(self, lookback=90, zoom=15):
+        """Left: recent prices plus the forecast. Right: zoom on the forecast days."""
+        models = [m for m in MODELS if self.forecasts.get(m)]
+        if not models:
             return None
 
-        fig, ax = plt.subplots(figsize=(14, 6))
+        last_date, last_close = self.dates[-1], float(self.series.iloc[-1])
+        steps = len(self.forecasts[models[0]]['forecast'])
+        future = pd.bdate_range(last_date + pd.offsets.BDay(1), periods=steps)
 
-        # Historical data
-        ax.plot(self.train.index[-60:], self.train.values[-60:], 'o-',
-                color=COLORS['actual'], linewidth=2, label='Historical', markersize=4)
+        fig, (ax, zx) = plt.subplots(1, 2, figsize=(14, 5.5), gridspec_kw={'width_ratios': [2.2, 1]})
+        for a, n in ((ax, lookback), (zx, zoom)):
+            a.plot(self.dates[-n:], self.series.to_numpy()[-n:], color=COLORS['actual'], lw=2, label='Actual close')
+            a.axvspan(last_date, future[-1], color=GRID, alpha=0.6, lw=0)
+            for m in models:
+                f = self.forecasts[m]['forecast']
+                a.plot([last_date, *future], [last_close, *f], '-o', color=COLORS[m],
+                       lw=2.8 if m == 'ensemble' else 1.6, ms=4 if a is ax else 6,
+                       label=f"{m.upper()}  ${f[-1]:,.2f}", zorder=3 if m == 'ensemble' else 2)
+            self._style_dates(a)
+            a.yaxis.set_major_formatter(plt.FuncFormatter(lambda v, _: f"${v:,.0f}"))
 
-        # Test set
-        ax.plot(self.test.index, self.test.values, 'o--',
-                color=COLORS['actual'], linewidth=1.5, alpha=0.7, label='Test Set', markersize=3)
+        ax.set_title(f"{self.ticker}: last {lookback} trading days and the next {steps}",
+                     loc='left', fontweight='bold')
+        zx.set_title(f"Zoom: forecast for {future[0]:%b %d} - {future[-1]:%b %d}", loc='left', fontweight='bold')
+        zx.annotate(f"last close ${last_close:,.2f}", (last_date, last_close), xytext=(-8, 10),
+                    textcoords='offset points', ha='right', fontsize=9, color=MUTED)
+        ax.legend(loc='upper left', fontsize=9.5, title='5th-day forecast', title_fontsize=9.5)
+        fig.tight_layout()
 
-        # Generate future dates
-        last_date = self.close.index[-1]
-        future_dates = pd.date_range(start=last_date + timedelta(days=1), periods=5, freq='D')
-
-        # Plot forecasts
-        for model_name, color in COLORS.items():
-            if model_name == 'actual':
-                continue
-            if model_name in self.forecasts and self.forecasts[model_name] is not None:
-                forecast = self.forecasts[model_name]['forecast']
-                ax.plot(future_dates[:len(forecast)], forecast, 's-',
-                       color=color, linewidth=2, label=model_name.upper(), markersize=6, alpha=0.8)
-
-        ax.axvline(last_date, color=MUTED, linestyle=':', linewidth=1, alpha=0.5)
-        ax.set_xlabel('Date', fontsize=11, fontweight='bold')
-        ax.set_ylabel('Price ($)', fontsize=11, fontweight='bold')
-        ax.set_title(f'{self.ticker} - 5-Day Forecast Comparison', fontsize=13, fontweight='bold')
-        ax.legend(loc='best', fontsize=9, framealpha=0.95)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%d"))
-        ax.xaxis.set_major_locator(mdates.DayLocator(interval=5))
-        plt.xticks(rotation=45, ha='right')
-        plt.tight_layout()
-
-        # Save
         chart_path = self.output_dir / f"{self.ticker}_forecast_chart.png"
-        plt.savefig(chart_path, dpi=100, bbox_inches='tight')
-        plt.close()
-
-        return str(chart_path.relative_to(self.output_dir))
+        fig.savefig(chart_path, dpi=CHART_DPI)
+        plt.close(fig)
+        return chart_path.name
 
     def generate_accuracy_chart(self):
-        """Create model accuracy comparison"""
-        metrics = []
-        models = []
-
-        for model_name, forecast_data in self.forecasts.items():
-            if forecast_data and model_name != 'ensemble':
-                models.append(model_name.upper())
-                metrics.append(forecast_data.get('r2', 0))
-
-        if not metrics:
+        """Hold-out error of each model next to the naive 'price stays flat' guess (lower is better)."""
+        models = [m for m in MODELS if self.forecasts.get(m)]
+        if not models:
             return None
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+        rows = [(m.upper(), self.forecasts[m], COLORS[m]) for m in models] + [('NAIVE', self.naive, COLORS['naive'])]
+        names = [r[0] for r in rows]
+        colors = [r[2] for r in rows]
 
-        # R² Scores
-        colors_list = [COLORS.get(m.lower(), '#999') for m in models]
-        ax1.barh(models, metrics, color=colors_list, alpha=0.8, edgecolor='black', linewidth=1.5)
-        ax1.set_xlabel('R² Score', fontsize=11, fontweight='bold')
-        ax1.set_title('Model Performance (R² Score)', fontsize=12, fontweight='bold')
-        ax1.set_xlim(0, 1)
-        ax1.axvline(0.5, color=MUTED, linestyle='--', alpha=0.5)
-        ax1.grid(axis='x', alpha=0.3)
-
-        # RMSE Comparison
-        rmse_vals = [self.forecasts[m.lower()]['rmse'] for m in models if m.lower() in self.forecasts and self.forecasts[m.lower()] is not None]
-        if rmse_vals:
-            ax2.barh(models, rmse_vals, color=colors_list, alpha=0.8, edgecolor='black', linewidth=1.5)
-            ax2.set_xlabel('RMSE', fontsize=11, fontweight='bold')
-            ax2.set_title('Prediction Error (RMSE)', fontsize=12, fontweight='bold')
-            ax2.grid(axis='x', alpha=0.3)
-
-        plt.tight_layout()
+        fig, axes = plt.subplots(1, 2, figsize=(14, 4.5))
+        for a, key, label in ((axes[0], 'rmse', 'RMSE'), (axes[1], 'mae', 'MAE')):
+            vals = [r[1][key] for r in rows]
+            bars = a.barh(names, vals, color=colors, height=0.6)
+            a.bar_label(bars, labels=[f"${v:,.2f}" for v in vals], padding=4, fontsize=10)
+            a.axvline(self.naive[key], color=COLORS['naive'], ls='--', lw=1)
+            a.set_xlim(0, max(vals) * 1.25)
+            a.invert_yaxis()
+            a.grid(axis='y', visible=False)
+            a.set_title(f"{label} on the last {len(self.test)} held-out days (lower is better)",
+                        loc='left', fontweight='bold', fontsize=11)
+        fig.suptitle(f"{self.ticker}: dashed line = naive forecast; bars left of it beat naive",
+                     x=0.01, ha='left', fontsize=10, color=MUTED)
+        fig.tight_layout()
 
         chart_path = self.output_dir / f"{self.ticker}_accuracy_chart.png"
-        plt.savefig(chart_path, dpi=100, bbox_inches='tight')
-        plt.close()
-
-        return str(chart_path.relative_to(self.output_dir))
+        fig.savefig(chart_path, dpi=CHART_DPI)
+        plt.close(fig)
+        return chart_path.name
 
     def to_dict(self):
-        """Export results as dictionary"""
         results = {
             'ticker': self.ticker,
             'timestamp': datetime.now().isoformat(),
-            'models': {}
+            'models': {},
+            'naive': {k: self.naive[k] for k in ('rmse', 'mae', 'r2')},
         }
-
         for model_name, forecast_data in self.forecasts.items():
             if forecast_data:
                 results['models'][model_name] = {
                     'algorithm': forecast_data['model'],
-                    'r2_score': forecast_data.get('r2', None),
-                    'rmse': forecast_data.get('rmse', None),
-                    'mae': forecast_data.get('mae', None),
+                    'r2_score': forecast_data.get('r2'),
+                    'rmse': forecast_data.get('rmse'),
+                    'mae': forecast_data.get('mae'),
                     'forecast_5d': forecast_data['forecast'].tolist()[:5],
-                    'weights': forecast_data.get('weights', {})
+                    'weights': forecast_data.get('weights', {}),
                 }
-
         return results
 
 
@@ -360,48 +246,28 @@ def main():
     """Example usage"""
     import yfinance as yf
 
-    # Download sample data
     tickers = ["NVDA", "AAPL", "MSFT"]
     output_dir = Path("ml_analysis")
     output_dir.mkdir(exist_ok=True)
-
     all_results = []
 
     for ticker in tickers:
-        print(f"\n{'='*60}")
-        print(f"Processing {ticker}")
-        print('='*60)
-
+        print(f"\n{'='*60}\nProcessing {ticker}\n{'='*60}")
         try:
-            # Download data
-            data = yf.download(ticker, period="1y", progress=False)
-            close = data['Close']
-
-            # Forecast
+            close = yf.download(ticker, period="1y", progress=False)['Close']
             forecaster = TimeSeriesForecaster(ticker, close, output_dir)
             forecaster.run_all_models(forecast_periods=5)
-
-            # Generate visualizations
-            chart1 = forecaster.generate_forecast_chart()
-            chart2 = forecaster.generate_accuracy_chart()
-
-            print(f"  [OK] Forecast chart: {chart1}")
-            print(f"  [OK] Accuracy chart: {chart2}")
-
-            # Save results
+            print(f"  [OK] Forecast chart: {forecaster.generate_forecast_chart()}")
+            print(f"  [OK] Accuracy chart: {forecaster.generate_accuracy_chart()}")
             results = forecaster.to_dict()
             all_results.append(results)
-
             for model, data in results['models'].items():
-                print(f"    {model.upper():12} R²={data['r2_score']:.3f}  RMSE={data['rmse']:.2f}")
-
+                print(f"    {model.upper():12} R2={data['r2_score']:.3f}  RMSE={data['rmse']:.2f}")
         except Exception as e:
             print(f"  [FAIL] Error: {str(e)[:100]}")
 
-    # Save all results
     with open(output_dir / "ml_forecasting_results.json", "w") as f:
         json.dump(all_results, f, indent=2)
-
     print(f"\n[OK] Results saved to {output_dir}/ml_forecasting_results.json")
 
 

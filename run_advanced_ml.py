@@ -108,7 +108,7 @@ def generate_enhanced_dashboard(results):
         .model-card h4 { margin: 0 0 0.5rem 0; font-size: 1rem; }
         .metric { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 0.3rem 0; }
         .metric-good { color: #008300; font-weight: 600; }
-        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .chart-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin: 2rem 0; }
         .chart-box { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem; }
         .chart-img { width: 100%; height: auto; border-radius: 4px; }
         .stock-section { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; margin: 1.5rem 0; }
