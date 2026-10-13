@@ -50,9 +50,9 @@ def run_advanced_forecasting(tickers=None, output_dir="ml_analysis"):
             chart2 = forecaster.generate_accuracy_chart()
 
             if chart1:
-                print(f"  ✓ Forecast chart")
+                print(f"  [OK] Forecast chart")
             if chart2:
-                print(f"  ✓ Accuracy chart")
+                print(f"  [OK] Accuracy chart")
 
             # Get results
             results = forecaster.to_dict()
@@ -63,18 +63,18 @@ def run_advanced_forecasting(tickers=None, output_dir="ml_analysis"):
                 [(m, d['r2_score']) for m, d in results['models'].items() if d['r2_score']],
                 key=lambda x: x[1] if x[1] else -1
             )
-            print(f"  ✓ Best model: {best_model[0].upper()} (R²={best_model[1]:.3f})")
+            print(f"  [OK] Best model: {best_model[0].upper()} (R={best_model[1]:.3f})")
 
         except Exception as e:
-            print(f"  ✗ Error: {str(e)[:60]}")
+            print(f"  [ERROR] {str(e)[:60]}")
 
     # Save all results
     results_file = output_dir / "ml_forecasting_results.json"
     with open(results_file, "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print(f"\n✓ Processed {len(all_results)} stocks")
-    print(f"✓ Results saved to {results_file}")
+    print(f"\n[OK] Processed {len(all_results)} stocks")
+    print(f"[OK] Results saved to {results_file}")
 
     return all_results
 
@@ -262,11 +262,11 @@ def main():
         with open("ml-analysis.html", "w") as f:
             f.write(html)
 
-        print("\n✓ Dashboard generated: ml-analysis.html")
-        print("✓ All models completed successfully!")
+        print("\n[OK] Dashboard generated: ml-analysis.html")
+        print("[OK] All models completed successfully!")
         return True
     else:
-        print("\n✗ No results to display")
+        print("\n[FAIL] No results to display")
         return False
 
 

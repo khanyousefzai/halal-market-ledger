@@ -27,14 +27,14 @@ try:
     HAS_STATSMODELS = True
 except:
     HAS_STATSMODELS = False
-    print("⚠ statsmodels not available - ARIMA/SARIMA disabled")
+    print("[WARN] statsmodels not available - ARIMA/SARIMA disabled")
 
 try:
     from prophet import Prophet
     HAS_PROPHET = True
 except:
     HAS_PROPHET = False
-    print("⚠ Prophet not available - Prophet model disabled")
+    print("[WARN] Prophet not available - Prophet model disabled")
 
 # Chart styling
 INK, MUTED, GRID, AXIS, SURFACE = "#0b0b0b", "#52514e", "#e1e0d9", "#c3c2b7", "#fcfcfb"
@@ -97,7 +97,7 @@ class TimeSeriesForecaster:
                 'r2': float(r2)
             }
         except Exception as e:
-            print(f"  ⚠ ARIMA failed for {self.ticker}: {str(e)[:50]}")
+            print(f"  ! ARIMA failed for {self.ticker}: {str(e)[:50]}")
             return None
 
     def forecast_sarima(self, periods=5):
@@ -123,7 +123,7 @@ class TimeSeriesForecaster:
                 'r2': float(r2)
             }
         except Exception as e:
-            print(f"  ⚠ SARIMA failed for {self.ticker}: {str(e)[:50]}")
+            print(f"  ! SARIMA failed for {self.ticker}: {str(e)[:50]}")
             return None
 
     def forecast_xgboost(self, periods=5, lag_features=10):
@@ -145,6 +145,17 @@ class TimeSeriesForecaster:
 
             if len(X_train) < 10 or len(X_test) < 2:
                 return None
+
+            # Ensure 2D shape for XGBoost
+            if X_train.ndim == 1:
+                X_train = X_train.reshape(-1, 1)
+            elif X_train.ndim == 3:
+                X_train = X_train.reshape(X_train.shape[0], -1)
+
+            if X_test.ndim == 1:
+                X_test = X_test.reshape(-1, 1)
+            elif X_test.ndim == 3:
+                X_test = X_test.reshape(X_test.shape[0], -1)
 
             # Train XGBoost
             model = xgb.XGBRegressor(n_estimators=100, max_depth=5, learning_rate=0.1,
@@ -174,7 +185,7 @@ class TimeSeriesForecaster:
                 'r2': float(r2)
             }
         except Exception as e:
-            print(f"  ⚠ XGBoost failed for {self.ticker}: {str(e)[:50]}")
+            print(f"  ! XGBoost failed for {self.ticker}: {str(e)[:50]}")
             return None
 
     def forecast_ensemble(self, periods=5):
@@ -182,13 +193,15 @@ class TimeSeriesForecaster:
         forecasts = []
         weights = []
 
-        # Collect all model forecasts
+        # Collect all model forecasts with valid R² scores
         for model_name in ['arima', 'sarima', 'xgboost']:
             if model_name in self.forecasts and self.forecasts[model_name] is not None:
-                # Weight by R² score (higher R² = better model = higher weight)
-                weight = max(0, self.forecasts[model_name].get('r2', 0.1))
-                forecasts.append(self.forecasts[model_name]['forecast'])
-                weights.append(weight)
+                r2 = self.forecasts[model_name].get('r2')
+                # Only include models with valid (non-NaN) R² scores
+                if r2 is not None and not np.isnan(r2):
+                    weight = max(0.1, r2)  # Use at least 0.1 as minimum weight
+                    forecasts.append(self.forecasts[model_name]['forecast'])
+                    weights.append(weight)
 
         if not forecasts:
             return None
@@ -200,16 +213,16 @@ class TimeSeriesForecaster:
         # Ensemble accuracy on test set
         ensemble_preds = []
         for pred, weight in zip(forecasts, weights):
-            ensemble_preds.append(pred[:len(self.test)] * weight if len(pred) >= len(self.test) else None)
+            if len(pred) >= len(self.test):
+                ensemble_preds.append(pred[:len(self.test)] * weight)
 
-        valid_preds = [p for p in ensemble_preds if p is not None]
-        if valid_preds:
-            ensemble_test = np.mean(valid_preds, axis=0)
+        if ensemble_preds:
+            ensemble_test = np.mean(ensemble_preds, axis=0)
             rmse = np.sqrt(mean_squared_error(self.test[:len(ensemble_test)], ensemble_test))
             mae = mean_absolute_error(self.test[:len(ensemble_test)], ensemble_test)
             r2 = r2_score(self.test[:len(ensemble_test)], ensemble_test)
         else:
-            rmse = mae = r2 = np.nan
+            rmse = mae = r2 = 0.0
 
         return {
             'forecast': ensemble_forecast,
@@ -372,8 +385,8 @@ def main():
             chart1 = forecaster.generate_forecast_chart()
             chart2 = forecaster.generate_accuracy_chart()
 
-            print(f"  ✓ Forecast chart: {chart1}")
-            print(f"  ✓ Accuracy chart: {chart2}")
+            print(f"  [OK] Forecast chart: {chart1}")
+            print(f"  [OK] Accuracy chart: {chart2}")
 
             # Save results
             results = forecaster.to_dict()
@@ -383,13 +396,13 @@ def main():
                 print(f"    {model.upper():12} R²={data['r2_score']:.3f}  RMSE={data['rmse']:.2f}")
 
         except Exception as e:
-            print(f"  ✗ Error: {str(e)[:100]}")
+            print(f"  [FAIL] Error: {str(e)[:100]}")
 
     # Save all results
     with open(output_dir / "ml_forecasting_results.json", "w") as f:
         json.dump(all_results, f, indent=2)
 
-    print(f"\n✓ Results saved to {output_dir}/ml_forecasting_results.json")
+    print(f"\n[OK] Results saved to {output_dir}/ml_forecasting_results.json")
 
 
 if __name__ == "__main__":
