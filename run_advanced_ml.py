@@ -259,7 +259,7 @@ def main():
 
         html = generate_enhanced_dashboard(results)
 
-        with open("ml-analysis.html", "w") as f:
+        with open("ml-analysis.html", "w", encoding="utf-8") as f:
             f.write(html)
 
         print("\n[OK] Dashboard generated: ml-analysis.html")
