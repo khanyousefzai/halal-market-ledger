@@ -24,15 +24,15 @@ Your Halal Market Ledger application now includes **two views**:
 
 ## How It Works
 
-### Daily Automated Pipeline (GitHub Actions)
+### Automated Pipeline (GitHub Actions)
 
-The system runs **every day at 13:10 UTC** automatically:
+The workflow runs **every day at 13:10 UTC**. The report runs every time; the ML step runs **only on Mondays**:
 
 1. **Generate Report** (existing) 
    - Fetches daily market data
    - Scores securities using the 105-point model
 
-2. **Generate ML Analysis** (new)
+2. **Generate ML Analysis** (weekly, Mondays)
    - Executes the Colab notebook: `halal_stocks_ml_forecasting.ipynb`
    - Extracts outputs:
      - `signals.csv` — BUY/WATCH/NO BUY recommendations
@@ -145,9 +145,10 @@ This will:
 - **Not investment advice** — educational tool only
 - Model trained during 2023-2026 (AI/semiconductor rally period)
 
-### Daily Schedule
-- Runs at **13:10 UTC** every day (9:10 ET EDT / 8:10 ET EST)
-- Can also be triggered manually from GitHub Actions > Daily report > Run workflow
+### Schedule
+- Report: **13:10 UTC** every day (9:10 ET EDT / 8:10 ET EST)
+- ML forecasts: **Mondays** at the same time (the Monday cron line in `daily.yml`, matched by `ML_CRON`)
+- Manual run: GitHub Actions > Daily report > Run workflow; tick **"Also refresh the ML forecasts"** to include ML
 
 ### Updating the Notebook
 To modify the analysis:
@@ -164,7 +165,7 @@ Users will see two buttons on all pages:
 - **📊 View Screen** — Classic daily reports
 - **🤖 ML Analysis** — Machine learning forecasts
 
-Both update daily at 13:10 UTC, automatically deployed to GitHub Pages.
+The screen updates daily and ML forecasts every Monday (13:10 UTC), automatically deployed to GitHub Pages.
 
 ---
 
@@ -190,7 +191,7 @@ Both update daily at 13:10 UTC, automatically deployed to GitHub Pages.
 - [x] ML Analysis dashboard page created (`ml-analysis.html`)
 - [x] GitHub Actions pipeline updated with notebook execution
 - [x] Navigation between View Screen and ML Analysis
-- [x] Daily automatic execution (13:10 UTC)
+- [x] Automatic execution: report daily, ML weekly on Mondays (13:10 UTC)
 - [x] Dependencies added to requirements.txt
 - [x] Outputs committed to repo and deployed
 
