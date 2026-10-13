@@ -218,6 +218,6 @@ STARS_JS = '''<script>
 
 if __name__ == '__main__':
     hist = load_history()
-    with open(os.path.join(ROOT,'index.html'),'w') as f:
+    with open(os.path.join(ROOT,'index.html'),'w',encoding='utf-8') as f:
         f.write(build_index(hist))
     print('index.html rebuilt — %d report(s) in archive' % len(hist))
