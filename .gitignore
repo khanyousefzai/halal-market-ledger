@@ -17,7 +17,6 @@ build/
 *.nbconvert_errors
 
 # ML Analysis outputs (generated daily)
-ml_analysis/
 output.ipynb
 signals.csv
 fundamentals.csv
