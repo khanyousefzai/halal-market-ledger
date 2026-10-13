@@ -26,7 +26,7 @@ Your Halal Market Ledger application now includes **two views**:
 
 ### Automated Pipeline (GitHub Actions)
 
-The workflow runs **every day at 13:10 UTC**. The report runs every time; the ML step runs **only on Mondays**:
+The workflow runs **every weekday at 13:10 UTC**. The report runs every time; the ML step runs **only on Mondays**:
 
 1. **Generate Report** (existing) 
    - Fetches daily market data
@@ -146,7 +146,7 @@ This will:
 - Model trained during 2023-2026 (AI/semiconductor rally period)
 
 ### Schedule
-- Report: **13:10 UTC** every day (9:10 ET EDT / 8:10 ET EST)
+- Report: **13:10 UTC** every weekday (9:10 ET EDT / 8:10 ET EST)
 - ML forecasts: **Mondays** at the same time (the Monday cron line in `daily.yml`, matched by `ML_CRON`)
 - Manual run: GitHub Actions > Daily report > Run workflow; tick **"Also refresh the ML forecasts"** to include ML
 
