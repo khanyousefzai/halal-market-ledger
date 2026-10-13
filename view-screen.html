@@ -1,22 +1,13 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0;URL='reports/2026-10-13.html'">
-<title>Redirecting...</title>
+<meta http-equiv="refresh" content="0;url=reports.html">
+<link rel="canonical" href="reports.html">
+<title>Halal Market Ledger</title>
 </head>
 <body>
-<p>Redirecting to today's report...</p>
-<script>
-fetch('data/history.json')
-  .then(r => r.json())
-  .then(data => {
-    if(data && data.length) {
-      const latest = data.sort((a,b) => b.date.localeCompare(a.date))[0];
-      window.location = 'reports/' + latest.date + '.html';
-    }
-  });
-</script>
+<p><a href="reports.html">Open the screen</a></p>
 </body>
 </html>
