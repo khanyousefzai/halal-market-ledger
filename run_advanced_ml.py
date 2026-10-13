@@ -193,8 +193,8 @@ def generate_enhanced_dashboard(results):
 """
 
         # Charts
-        forecast_chart = f"{ticker}_forecast_chart.png"
-        accuracy_chart = f"{ticker}_accuracy_chart.png"
+        forecast_chart = f"ml_analysis/{ticker}_forecast_chart.png"
+        accuracy_chart = f"ml_analysis/{ticker}_accuracy_chart.png"
 
         html += f"""
             <div class="chart-box">
