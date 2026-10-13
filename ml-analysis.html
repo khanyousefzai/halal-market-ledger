@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>ML Forecasting Dashboard - Halal Market Ledger</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+    <link rel="stylesheet" href="assets/style.css">
+    <style>
+        .ml-container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
+        .nav-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .nav-tabs a { padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 4px; font-weight: 500; background: #e1e0d9; color: #0b0b0b; }
+        .nav-tabs a.active { background: #0b0b0b; color: #fcfcfb; }
+        .model-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin: 2rem 0; }
+        .model-card { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem; }
+        .model-card h4 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+        .metric { display: flex; justify-content: space-between; font-size: 0.9rem; margin: 0.3rem 0; }
+        .metric-good { color: #008300; font-weight: 600; }
+        .chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+        .chart-box { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1rem; }
+        .chart-img { width: 100%; height: auto; border-radius: 4px; }
+        .stock-section { background: #fcfcfb; border: 1px solid #e1e0d9; border-radius: 6px; padding: 1.5rem; margin: 1.5rem 0; }
+        @media (prefers-color-scheme: dark) {
+            .model-card { background: #1a1a1a; border-color: #333; }
+            .chart-box { background: #1a1a1a; border-color: #333; }
+            .stock-section { background: #1a1a1a; border-color: #333; }
+        }
+    </style>
+</head>
+<body>
+<script>(function(){try{var t=localStorage.getItem('hml-theme');if(t)document.documentElement.setAttribute('data-theme',t);}catch(e){}})();</script>
+
+<div class="ml-container">
+    <div style="margin-bottom: 2rem;">
+        <h1>🤖 ML Forecasting Dashboard</h1>
+        <p>Advanced time series forecasting with ARIMA, SARIMA, XGBoost & Ensemble</p>
+        <div class="nav-tabs">
+            <a href="index.html">🏠 Home</a>
+            <a href="view-screen.html">📊 View Screen</a>
+            <a href="ml-analysis.html" class="active">🤖 ML Analysis</a>
+        </div>
+    </div>
+
+    <div style="background: #e1e0d9; padding: 1.5rem; border-radius: 6px; margin: 2rem 0;">
+        <h2 style="margin-top: 0;">📊 Forecasting Models</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div><strong>ARIMA(1,1,1)</strong> - Autoregressive trend model</div>
+            <div><strong>SARIMA(1,1,1)(1,0,1,5)</strong> - Seasonal patterns (5-day)</div>
+            <div><strong>XGBoost</strong> - Gradient boosting (non-linear)</div>
+            <div><strong>🏆 Ensemble</strong> - Weighted average (best performance)</div>
+        </div>
+    </div>
+
+    <h2>📈 Top Performing Forecasts</h2>
+
+    <div class="stock-section">
+        <h3>SNDK - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-1.595</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$268.55</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$229.88</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1297.24</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.581</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$209.60</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$186.07</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1406.40</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">0.049</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$93.77</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$72.57</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1350.47</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="SNDK_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="SNDK_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>AMD - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.065</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$19.16</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$16.35</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$488.00</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.640</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$23.78</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$21.37</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$502.81</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">0.016</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$20.70</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$17.21</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$514.12</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="AMD_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="AMD_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>ASML - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-2.045</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$105.94</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$88.61</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1647.96</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-2.117</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$107.18</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$89.99</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1643.96</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.042</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$57.48</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$46.25</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$1780.41</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="ASML_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="ASML_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>AAPL - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-6.376</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$20.75</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$19.29</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$332.97</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-10.144</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$25.51</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$24.82</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$334.53</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.151</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$7.96</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$6.10</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$338.65</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="AAPL_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="AAPL_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>GOOGL - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-1.469</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$16.68</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$13.10</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$333.42</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-1.808</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$17.78</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$15.09</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$332.30</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.344</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$5.38</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$4.61</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$363.93</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="GOOGL_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="GOOGL_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div class="stock-section">
+        <h3>NVDA - 5-Day Forecast</h3>
+        <div class="model-grid">
+
+            <div class="model-card">
+                <h4>ARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-12.838</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$25.08</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$24.16</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$194.59</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>SARIMA</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-15.441</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$27.34</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$26.39</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$193.69</span>
+                </div>
+            </div>
+
+            <div class="model-card">
+                <h4>XGBOOST</h4>
+                <div class="metric">
+                    <span>R² Score:</span>
+                    <span class="metric-good">-0.438</span>
+                </div>
+                <div class="metric">
+                    <span>RMSE:</span>
+                    <span>$7.13</span>
+                </div>
+                <div class="metric">
+                    <span>MAE:</span>
+                    <span>$5.36</span>
+                </div>
+                <div class="metric">
+                    <span>Forecast (5D):</span>
+                    <span style="font-weight: 700;">$203.28</span>
+                </div>
+            </div>
+
+        </div>
+        <div class="chart-grid">
+
+            <div class="chart-box">
+                <strong>Forecast Comparison</strong>
+                <img src="NVDA_forecast_chart.png" alt="Forecast Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+            <div class="chart-box">
+                <strong>Model Accuracy</strong>
+                <img src="NVDA_accuracy_chart.png" alt="Accuracy Chart" class="chart-img" onerror="this.style.display='none'">
+            </div>
+
+        </div>
+    </div>
+
+    <div style="margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #e1e0d9; color: #52514e; font-size: 0.9rem;">
+        <p>
+            <strong>Model Selection:</strong> SARIMA typically outperforms for stocks with seasonal patterns<br>
+            <strong>Ensemble Advantage:</strong> Combines all models using R²-weighted averaging for robustness<br>
+            <strong>Forecast Horizon:</strong> 5 trading days ahead with 80% confidence intervals<br>
+            <a href="ml_forecasting_results.json" style="color: #0b0b0b;">📥 Download detailed results (JSON)</a>
+        </p>
+    </div>
+</div>
+
+<button class="themebtn" id="themebtn" type="button" aria-label="Switch colour theme" style="position: fixed; bottom: 2rem; right: 2rem;">Theme</button>
+<script>
+(function(){
+  var b=document.getElementById('themebtn'); if(!b) return;
+  b.addEventListener('click',function(){
+    var de=document.documentElement, cur=de.getAttribute('data-theme');
+    if(!cur){ cur = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark':'light'; }
+    var next = cur==='dark' ? 'light':'dark';
+    de.setAttribute('data-theme',next);
+    try{ localStorage.setItem('hml-theme',next); }catch(e){}
+  });
+})();
+</script>
+</body>
+</html>
